@@ -1,0 +1,16 @@
+.row:has(.medical-lens-marker) {
+    > [class*='col-']:first-child:not(#product_details) { display: none !important; }
+    > #product_details { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; padding: 15px; }
+}
+.prescription-table { display: flex; flex-direction: column; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+.prescription-row { display: flex; flex-direction: row; border-bottom: 1px solid #dee2e6; align-items: center; transition: all 0.3s ease; }
+.prescription-row:last-child { border-bottom: none; }
+.header-row { background-color: #e9ecef; font-weight: bold; color: #495057; text-transform: uppercase; font-size: 0.85rem; }
+.prescription-cell { flex: 1; padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; min-width: 80px; }
+.prescription-cell:last-child { border-right: none; }
+.first-col { flex: 0 0 110px; background-color: #f8f9fa; font-weight: bold; justify-content: flex-start; padding-left: 15px; z-index: 10; }
+.table-input { width: 100%; text-align: center; text-align-last: center; border: 1px solid #ced4da; background-color: #fff; font-weight: 500; height: 35px; &:focus { border-color: #00A09D; box-shadow: none; } }
+.section-disabled { opacity: 0.5; background-color: #f2f2f2 !important; }
+.section-disabled select { pointer-events: none; }
+.section-disabled .first-col, .section-disabled .form-check, .section-disabled input[type="checkbox"] { pointer-events: auto !important; cursor: pointer; }
+@media (max-width: 768px) { .prescription-table { overflow-x: auto; display: block; } .prescription-row { min-width: 600px; } }

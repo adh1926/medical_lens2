@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_medical_sale" model="ir.actions.report">
+        <field name="name">Prescripción Médica (Receta)</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">medical_lens2.report_lens_doc</field>
+        <field name="report_file">medical_lens2.report_lens_doc</field>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_medical_inv" model="ir.actions.report">
+        <field name="name">Prescripción Médica (Receta)</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">medical_lens2.report_lens_doc</field>
+        <field name="report_file">medical_lens2.report_lens_doc</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_lens_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family: Arial, sans-serif; font-size: 12px;">
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <h3 style="color: #00A09D; font-weight: bold;">Receta Oftalmológica</h3>
+                                <strong>Documento:</strong> <span t-field="doc.name"/><br/>
+                                <strong>Fecha:</strong> <span t-field="doc.date_order" t-if="'date_order' in doc" t-options='{"widget": "date"}'/><span t-field="doc.invoice_date" t-if="'invoice_date' in doc" t-options='{"widget": "date"}'/>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong>Paciente / Cliente:</strong><br/>
+                                <span t-field="doc.partner_id.name"/><br/>
+                                <span t-field="doc.partner_id.street"/>
+                            </div>
+                        </div>
+                        <table class="table table-bordered table-sm text-center" style="border-color: #000;">
+                            <thead style="background-color: #f0f0f0;">
+                                <tr style="font-weight: bold; border-bottom: 2px solid #000;">
+                                    <th style="width: 12%;">REF. RECETA</th>
+                                    <th style="width: 30%;">OJO (EYE)</th>
+                                    <th>ESFERA</th>
+                                    <th>CILINDRO</th>
+                                    <th>EJE</th>
+                                    <th>ADICION</th>
+                                    <th>CANT.</th>
+                                    <th>PRECIO UNI.</th>
+                                    <th>TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.order_line if 'order_line' in doc else doc.invoice_line_ids" t-as="line">
+                                    <t t-if="line.product_id.is_medical_lens">
+                                        <t t-set="d" t-value="doc.get_lens_details(line)"/>
+                                        <tr style="border-bottom: 1px solid #ccc;">
+                                            <td class="fw-bold text-primary" style="vertical-align: middle;"><t t-esc="d['pres_ref']"/></td>
+                                            <td class="text-start" style="padding: 8px;">
+                                                <div style="font-weight: bold; font-size: 11px; margin-bottom: 3px;">
+                                                    <t t-if="d['side'] == 'right'">OD (Derecho)</t>
+                                                    <t t-elif="d['side'] == 'left'">OI (Izquierdo)</t>
+                                                    <t t-else="">-</t>
+                                                </div>
+                                                <div style="font-size: 11px; color: #000; font-weight: bold; line-height: 1.2;"><t t-esc="d['product_name']"/></div>
+                                            </td>
+                                            <td style="vertical-align: middle;"><t t-esc="d['attrs'].get('SPH', '-')"/></td>
+                                            <td style="vertical-align: middle;"><t t-esc="d['attrs'].get('CYL', '-')"/></td>
+                                            <td style="vertical-align: middle;"><t t-esc="d['attrs'].get('AXIS', '-')"/></td>
+                                            <td style="vertical-align: middle;"><t t-esc="d['attrs'].get('ADD', '-')"/></td>
+                                            <td style="vertical-align: middle;"><span t-esc="d['qty']"/></td>
+                                            <td style="vertical-align: middle;"><span t-field="line.price_unit"/></td>
+                                            <td style="vertical-align: middle; font-weight: bold;"><span t-field="line.price_subtotal"/></td>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div class="row mt-2">
+                            <div class="col-4 offset-8">
+                                <table class="table table-sm table-bordered" style="border-color: #000;">
+                                    <tr><td><strong>Total sin impuestos:</strong></td><td class="text-end"><span t-field="doc.amount_untaxed"/></td></tr>
+                                    <tr><td><strong>Impuestos:</strong></td><td class="text-end"><span t-field="doc.amount_tax"/></td></tr>
+                                    <tr style="background-color: #000; color: #fff;"><td><strong>Total a Pagar:</strong></td><td class="text-end fw-bold"><span t-field="doc.amount_total"/></td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

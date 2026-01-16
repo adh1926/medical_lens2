@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ======================================================== -->
+    <!--   1. تصميم صفحة المنتج (Matrix + Inputs + Modals)        -->
+    <!-- ======================================================== -->
+    <template id="medical_lens_universal_layout" inherit_id="website_sale.product">
+        <xpath expr="//t[@t-call='website_sale.variants']" position="replace">
+            
+            <t t-if="not product.is_medical_lens">
+                <t t-call="website_sale.variants"/>
+            </t>
+
+            <t t-else="">
+                <!-- إعداد المتغيرات -->
+                <t t-set="is_attribute_mode" t-value="product.medical_setup_type == 'attribute'"/>
+                <t t-set="r_val_id" t-value="0"/>
+                <t t-set="l_val_id" t-value="0"/>
+                <t t-set="eye_line_id" t-value="0"/>
+
+                <t t-if="is_attribute_mode">
+                    <t t-set="eye_line" t-value="product.attribute_line_ids.filtered(lambda l: l.attribute_id.is_medical_eye)[:1]"/>
+                    <t t-if="not eye_line">
+                         <t t-set="eye_line" t-value="product.attribute_line_ids.filtered(lambda l: 'ojo' in l.attribute_id.name.lower() or 'eye' in l.attribute_id.name.lower())[:1]"/>
+                    </t>
+                    <t t-if="eye_line">
+                        <t t-set="eye_line_id" t-value="eye_line.id"/>
+                        <t t-set="r_obj" t-value="eye_line.product_template_value_ids.filtered(lambda v: v.product_attribute_value_id.medical_eye_side == 'right' or v.name in ['R', 'Right', 'OD', 'Derecha', 'Der'])[:1]"/>
+                        <t t-set="l_obj" t-value="eye_line.product_template_value_ids.filtered(lambda v: v.product_attribute_value_id.medical_eye_side == 'left' or v.name in ['L', 'Left', 'OS', 'Izquierda', 'Izq'])[:1]"/>
+                        <t t-set="r_val_id" t-value="r_obj.id"/>
+                        <t t-set="l_val_id" t-value="l_obj.id"/>
+                    </t>
+                </t>
+
+                <div class="medical-lens-marker d-none"></div>
+
+                <div id="medical_lens_app" class="mt-4">
+                    <style>.product_price, .o_wsale_product_btn, #add_to_cart_wrap { display: none !important; }</style>
+
+                    <t t-if="is_attribute_mode and (r_val_id == 0 or l_val_id == 0)">
+                        <div class="alert alert-warning">
+                            <strong>Error de Configuración:</strong> Faltan valores para el atributo 'OJO' (R/L).
+                        </div>
+                    </t>
+
+                    <t t-else="">
+                        
+                        <!-- إدخال رقم الوصفة والصورة -->
+                        <div class="mb-4 p-3 bg-light border rounded shadow-sm">
+                            <div class="mb-3">
+                                <label for="prescription_ref" class="form-label fw-bold text-dark" style="font-size: 1rem;">
+                                    <i class="fa fa-file-text-o me-2"></i> Número de Receta (Opcional)
+                                </label>
+                                <input type="text" id="prescription_ref" class="form-control" placeholder="Ej: REC-2025"/>
+                            </div>
+                            <t t-if="product.allow_prescription_upload">
+                                <div class="mb-0">
+                                    <label for="prescription_file" class="form-label fw-bold text-dark">
+                                        <i class="fa fa-camera me-2"></i> Subir Foto de Receta (Opcional)
+                                    </label>
+                                    <input type="file" id="prescription_file" class="form-control" accept="image/*,application/pdf"/>
+                                </div>
+                            </t>
+                        </div>
+
+                        <!-- جدول المصفوفة -->
+                        <div class="prescription-table mb-4">
+                            <div class="prescription-row header-row">
+                                <div class="prescription-cell first-col empty-header">OJO / EYE</div>
+                                <t t-foreach="product.attribute_line_ids" t-as="ptal">
+                                    <t t-if="not is_attribute_mode or ptal.id != eye_line_id">
+                                        <div class="prescription-cell header-cell"><t t-esc="ptal.attribute_id.name"/></div>
+                                    </t>
+                                </t>
+                            </div>
+
+                            <!-- يمين -->
+                            <div class="prescription-row data-row right-section" t-att-data-eye-val-id="r_val_id">
+                                <div class="prescription-cell first-col eye-label">
+                                    <div class="form-check">
+                                        <input class="form-check-input eye-checkbox" type="checkbox" id="check_right" checked="checked"/>
+                                        <label class="form-check-label fw-bold" for="check_right">OD (Der)</label>
+                                    </div>
+                                </div>
+                                <t t-foreach="product.attribute_line_ids" t-as="ptal">
+                                    <t t-if="not is_attribute_mode or ptal.id != eye_line_id">
+                                        <div class="prescription-cell">
+                                            <select class="form-select form-select-sm table-input">
+                                                <t t-foreach="ptal.product_template_value_ids" t-as="val">
+                                                    <option t-att-value="val.id"><t t-esc="val.name"/></option>
+                                                </t>
+                                            </select>
+                                        </div>
+                                    </t>
+                                </t>
+                            </div>
+
+                            <!-- يسار -->
+                            <div class="prescription-row data-row left-section" t-att-data-eye-val-id="l_val_id" style="background-color: #f9f9f9;">
+                                <div class="prescription-cell first-col eye-label">
+                                    <div class="form-check">
+                                        <input class="form-check-input eye-checkbox" type="checkbox" id="check_left" checked="checked"/>
+                                        <label class="form-check-label fw-bold" for="check_left">OI (Izq)</label>
+                                    </div>
+                                </div>
+                                <t t-foreach="product.attribute_line_ids" t-as="ptal">
+                                    <t t-if="not is_attribute_mode or ptal.id != eye_line_id">
+                                        <div class="prescription-cell">
+                                            <select class="form-select form-select-sm table-input">
+                                                <t t-foreach="ptal.product_template_value_ids" t-as="val">
+                                                    <option t-att-value="val.id"><t t-esc="val.name"/></option>
+                                                </t>
+                                            </select>
+                                        </div>
+                                    </t>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- السعر الإجمالي -->
+                        <div class="row mb-3 justify-content-center">
+                            <div class="col-md-6 text-center">
+                                <div class="p-3 bg-white border rounded shadow-sm">
+                                    <h5 class="text-muted mb-1">Total Estimado</h5>
+                                    <h3 class="fw-bold text-success" id="medical_lens_total_price">
+                                        <span class="currency_symbol">$</span> <span class="price_val">0.00</span>
+                                    </h3>
+                                    <small class="text-muted d-none" id="price_loading">Calculando...</small>
+                                    <div id="stock_warning_msg" class="alert alert-warning mt-2 d-none" style="font-size: 0.9rem;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-2">
+                            <button id="btn_add_medical_lens" class="btn btn-primary w-100 py-3 shadow-sm">
+                                <i class="fa fa-cart-plus me-2"></i> <span id="add_btn_text">Añadir Seleccionados al Carrito</span>
+                            </button>
+                        </div>
+                    </t>
+                    <input type="hidden" id="medical_tmpl_id" t-att-value="product.id"/>
+                </div>
+
+                <!-- 1. نافذة النجاح (Success Modal) -->
+                <div class="modal fade" id="medicalSuccessModal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title"><i class="fa fa-check-circle"></i> ¡Añadido al Carrito!</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <p class="lead mt-3">Los lentes se han añadido correctamente.</p>
+                                <p class="text-muted">¿Qué desea hacer ahora?</p>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fa fa-arrow-left"></i> Seguir Comprando
+                                </button>
+                                <a href="/shop/cart" class="btn btn-primary">
+                                    Ir al Carrito <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. نافذة الخطأ (Error Modal) - جديد -->
+                <div class="modal fade" id="medicalErrorModal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content border-danger">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title"><i class="fa fa-exclamation-triangle"></i> Atención</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <!-- هنا سيتم وضع نص الخطأ بواسطة JS -->
+                                <p id="medicalErrorMsg" class="fw-bold text-danger" style="white-space: pre-wrap; font-size: 1.1rem;"></p>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </t>
+        </xpath>
+    </template>
+
+    <!-- ======================================================== -->
+    <!--   2. تصحيح عرض الاسم في السلة (Name Fix Only)            -->
+    <!-- ======================================================== -->
+    <template id="medical_lens_cart_lines_name_fix" inherit_id="website_sale.cart_line_product_link">
+        <xpath expr="//a" position="replace">
+            <t t-if="line.product_id.is_medical_lens">
+                <!-- عرض الاسم الكامل مع التفاصيل -->
+                <strong t-field="line.name" style="white-space: pre-wrap; color: #000; display: block; margin-bottom: 5px;"/>
+            </t>
+            <t t-else="">
+                <!-- المنتجات العادية -->
+                <a t-att-href="line.product_id.website_url">
+                    <t t-esc="line.name_short"/>
+                </a>
+            </t>
+        </xpath>
+    </template>
+
+</odoo>
